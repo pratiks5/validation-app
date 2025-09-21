@@ -16,10 +16,13 @@ import java.util.List;
 @Service
 public class FileValidationService {
 
-    public void convertCsvToJson(String csvFilePath, String jsonFilePath) throws IOException {
+    public void convertCsvToJson(String csvResource, String jsonFilePath) throws IOException {
+        // Load CSV from classpath
         try (
-                Reader reader = new FileReader(csvFilePath);
-                Writer writer = new FileWriter(jsonFilePath)
+                Reader reader = new InputStreamReader(
+                        getClass().getClassLoader().getResourceAsStream(csvResource)
+                );
+                Writer writer = new FileWriter(jsonFilePath) // writes to container FS
         ) {
             CsvToBean<Person> csvToBean = new CsvToBeanBuilder<Person>(reader)
                     .withType(Person.class)
@@ -32,5 +35,5 @@ public class FileValidationService {
             mapper.writerWithDefaultPrettyPrinter().writeValue(writer, people);
         }
     }
-
 }
+
