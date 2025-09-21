@@ -18,9 +18,10 @@ public class ValidationAppApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		String csvPath = "src/main/resources/sample.csv";
-		String jsonPath = "src/main/resources/output.json";
-		fileValidationService.convertCsvToJson(csvPath, jsonPath);
+		String csvResource = "sample.csv";   // resource name
+		String jsonFilePath = "output.json"; // can be outside JAR
+
+		fileValidationService.convertCsvToJson(csvResource, jsonFilePath);
 		System.out.println("CSV to JSON conversion done!");
 	}
 
