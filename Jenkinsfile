@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'Maven3'   // configure Maven in Jenkins settings
+        jdk 'JDK17'      // configure JDK in Jenkins settings
+    }
+
     environment {
         DOCKER_IMAGE = "prats5/validation-app"
         DOCKER_TAG = "latest"
@@ -18,6 +23,12 @@ pipeline {
                 sh 'mvn clean install -DskipTests'
             }
         }
+
+        stage('Test') {
+             steps {
+                  sh 'mvn test'
+             }
+       }
 
         stage('Build Docker Image') {
             steps {
