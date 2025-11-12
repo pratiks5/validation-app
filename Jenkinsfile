@@ -421,32 +421,33 @@ pipeline {
                     <script>
                         // Parse suggested fix and create steps
                         function parseFixSteps(fixText) {
-                            const steps = fixText.split(/\\d+\\./).filter(step => step.trim());
+                            // Escape HTML to prevent XSS
+                            const escapeHtml = (text) => {
+                                const div = document.createElement('div');
+                                div.textContent = text;
+                                return div.innerHTML;
+                            };
+
+                            const steps = fixText.split(/\\\\d+\\\\./).filter(step => step.trim());
                             const stepsList = document.getElementById('fix-steps-list');
                             stepsList.innerHTML = '';
 
-                            steps.forEach((step, index) => {
+                            if (steps.length > 0) {
+                                steps.forEach((step, index) => {
+                                    const li = document.createElement('li');
+                                    li.innerHTML = '<div class="step-number">' + (index + 1) + '</div><div class="step-content">' + escapeHtml(step.trim()) + '</div>';
+                                    stepsList.appendChild(li);
+                                });
+                            } else {
+                                // If no numbered steps found, create a single step
                                 const li = document.createElement('li');
-                                li.innerHTML = \`
-                                    <div class="step-number">\${index + 1}</div>
-                                    <div class="step-content">\${step.trim()}</div>
-                                \`;
-                                stepsList.appendChild(li);
-                            });
-
-                            // If no numbered steps found, create a single step
-                            if (steps.length === 0 && fixText) {
-                                const li = document.createElement('li');
-                                li.innerHTML = \`
-                                    <div class="step-number">1</div>
-                                    <div class="step-content">\${fixText}</div>
-                                \`;
+                                li.innerHTML = '<div class="step-number">1</div><div class="step-content">' + escapeHtml(fixText) + '</div>';
                                 stepsList.appendChild(li);
                             }
                         }
 
                         // Initialize with the suggested fix from Jenkins
-                        parseFixSteps(\"${suggestedFix}\");
+                        parseFixSteps("${suggestedFix}");
 
                         // Tab switching functionality
                         const tabs = document.querySelectorAll('.tab');
@@ -460,13 +461,13 @@ pipeline {
                                 tabContents.forEach(c => c.classList.remove('active'));
 
                                 tab.classList.add('active');
-                                document.getElementById(\`content-\${targetTab}\`).classList.add('active');
+                                document.getElementById('content-' + targetTab).classList.add('active');
                             });
                         });
 
                         // Copy fix to clipboard functionality
                         function copyFixToClipboard() {
-                            const fixText = \`\${"${suggestedFix}"}\`;
+                            const fixText = "${suggestedFix}";
                             navigator.clipboard.writeText(fixText).then(() => {
                                 alert('Suggested fix copied to clipboard!');
                             }).catch(err => {
