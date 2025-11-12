@@ -84,85 +84,416 @@ pipeline {
                 def jsonResponse = readJSON text: responseContent
                 def rootCause = jsonResponse.rootCause ?: "No root cause identified"
                 def suggestedFix = jsonResponse.suggestedFix ?: "No suggested fix provided"
+                def buildSummary = jsonResponse.buildSummary ?: "The build failed during execution. Check the logs for detailed error information."
 
                 // Save FixMate analysis report
                 sh 'mkdir -p target/fix-mate-reports'
 
-                // Create CSS file
-                def cssContent = """
-                body { font-family: 'Inter', sans-serif; background: #f4f6fc; margin:0; padding:0;}
-                header { background: linear-gradient(90deg,#6a11cb,#2575fc); color:white; padding:20px; text-align:center;}
-                h1 { margin:0; font-size:28px;}
-                .container { max-width:1000px; margin:30px auto; padding:0 15px;}
-                .card { background:white; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.1); margin-bottom:20px; padding:20px; }
-                .card h2 { margin-top:0; font-size:22px; color:#333;}
-                .card p { font-size:16px; color:#555; }
-                .badge { display:inline-block; padding:5px 12px; border-radius:6px; font-size:14px; font-weight:600; margin-right:10px; color:white;}
-                .success { background:#28a745; }
-                .error   { background:#dc3545; }
-                .warning { background:#ffc107; color:#333;}
-                .info    { background:#17a2b8; }
-                .collapsible { background-color:#eee; color:#444; cursor:pointer; padding:10px 15px; width:100%; border:none; text-align:left; outline:none; font-size:16px; border-radius:6px; margin-bottom:5px;}
-                .active, .collapsible:hover { background-color:#ddd;}
-                .content { padding:0 15px; display:none; overflow:hidden; background-color:#f9f9f9; border-radius:6px; margin-bottom:10px;}
-                pre { background:#f0f2f5; padding:10px; border-radius:6px; overflow-x:auto; white-space: pre-wrap; word-wrap: break-word; }
-                footer { text-align:center; padding:15px; font-size:14px; color:#888;}
-                .copy-btn { background:#2575fc; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; float:right;}
-                """
-
-                writeFile file: 'target/fix-mate-reports/styles.css', text: cssContent
-
-                // Create HTML with external CSS
+                // Create enhanced HTML content with the new design
                 def htmlContent = """
-                <!DOCTYPE html>
+                <!doctype html>
                 <html lang="en">
                 <head>
                     <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>FixMate Build Analysis Dashboard</title>
-                    <link rel="stylesheet" href="styles.css">
+                    <style>
+                        html, body {
+                            height: 100%;
+                            margin: 0;
+                            padding: 0;
+                        }
+
+                        body {
+                            box-sizing: border-box;
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                            background: #f0f0f0;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            padding: 2rem;
+                        }
+
+                        * {
+                            box-sizing: border-box;
+                        }
+
+                        .dashboard-container {
+                            width: 100%;
+                            max-width: 1200px;
+                            background: white;
+                            border-radius: 16px;
+                            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                            overflow: hidden;
+                        }
+
+                        .dashboard-header {
+                            background: #335061;
+                            padding: 2rem;
+                            color: white;
+                        }
+
+                        .header-content {
+                            display: flex;
+                            align-items: center;
+                            justify-content: space-between;
+                            flex-wrap: wrap;
+                            gap: 1rem;
+                        }
+
+                        .header-title h1 {
+                            margin: 0;
+                            font-size: 1.875rem;
+                            font-weight: 700;
+                        }
+
+                        .header-title p {
+                            margin: 0.5rem 0 0 0;
+                            opacity: 0.8;
+                            font-size: 0.875rem;
+                        }
+
+                        .status-badge {
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 0.5rem;
+                            background: #fc8181;
+                            padding: 0.5rem 1rem;
+                            border-radius: 9999px;
+                            font-weight: 600;
+                            font-size: 0.875rem;
+                        }
+
+                        .status-icon {
+                            width: 8px;
+                            height: 8px;
+                            background: white;
+                            border-radius: 50%;
+                            animation: pulse 2s infinite;
+                        }
+
+                        @keyframes pulse {
+                            0%, 100% { opacity: 1; }
+                            50% { opacity: 0.5; }
+                        }
+
+                        .build-info {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                            gap: 1rem;
+                            padding: 2rem;
+                            background: #ffffff;
+                            border-bottom: 1px solid #d3d7cf;
+                        }
+
+                        .summary-card {
+                            background: #f8f8f8;
+                            padding: 1.5rem;
+                            border-radius: 4px;
+                            border-left: 4px solid #d33833;
+                        }
+
+                        .summary-card h3 {
+                            margin: 0 0 1rem 0;
+                            color: #2d3748;
+                            font-size: 1.25rem;
+                        }
+
+                        .summary-card p {
+                            margin: 0;
+                            color: #4a5568;
+                            line-height: 1.6;
+                        }
+
+                        .tabs-container {
+                            display: flex;
+                            background: #ffffff;
+                            border-bottom: 2px solid #d3d7cf;
+                            padding: 0 2rem;
+                            overflow-x: auto;
+                        }
+
+                        .tab {
+                            padding: 1rem 1.5rem;
+                            background: none;
+                            border: none;
+                            color: #718096;
+                            font-weight: 600;
+                            font-size: 0.875rem;
+                            cursor: pointer;
+                            border-bottom: 3px solid transparent;
+                            transition: all 0.3s ease;
+                            white-space: nowrap;
+                        }
+
+                        .tab:hover {
+                            color: #335061;
+                            background: rgba(51, 80, 97, 0.05);
+                        }
+
+                        .tab.active {
+                            color: #335061;
+                            border-bottom-color: #335061;
+                        }
+
+                        .content-area {
+                            padding: 2rem;
+                            min-height: 400px;
+                        }
+
+                        .tab-content {
+                            display: none;
+                            animation: fadeIn 0.3s ease;
+                        }
+
+                        .tab-content.active {
+                            display: block;
+                        }
+
+                        @keyframes fadeIn {
+                            from { opacity: 0; transform: translateY(10px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
+
+                        .content-section {
+                            background: #f8f8f8;
+                            padding: 1.5rem;
+                            border-radius: 4px;
+                            margin-bottom: 1.5rem;
+                            border-left: 4px solid #335061;
+                        }
+
+                        .content-section h3 {
+                            margin: 0 0 1rem 0;
+                            color: #2d3748;
+                            font-size: 1.125rem;
+                        }
+
+                        .content-section p {
+                            margin: 0;
+                            color: #4a5568;
+                            line-height: 1.6;
+                        }
+
+                        .log-viewer {
+                            background: #1a202c;
+                            color: #e2e8f0;
+                            padding: 1.5rem;
+                            border-radius: 8px;
+                            font-family: 'Courier New', monospace;
+                            font-size: 0.875rem;
+                            overflow-x: auto;
+                            line-height: 1.6;
+                        }
+
+                        .error-line {
+                            color: #fc8181;
+                            font-weight: 600;
+                        }
+
+                        .fix-steps {
+                            list-style: none;
+                            padding: 0;
+                            margin: 0;
+                        }
+
+                        .fix-steps li {
+                            background: #f8f8f8;
+                            padding: 1rem;
+                            margin-bottom: 0.75rem;
+                            border-radius: 4px;
+                            border-left: 4px solid #6d9dc5;
+                            display: flex;
+                            align-items: start;
+                            gap: 1rem;
+                        }
+
+                        .step-number {
+                            background: #6d9dc5;
+                            color: white;
+                            width: 28px;
+                            height: 28px;
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-weight: 700;
+                            font-size: 0.875rem;
+                            flex-shrink: 0;
+                        }
+
+                        .step-content {
+                            flex: 1;
+                            color: #2d3748;
+                        }
+
+                        .json-viewer {
+                            background: #1a202c;
+                            color: #e2e8f0;
+                            padding: 1.5rem;
+                            border-radius: 8px;
+                            font-family: 'Courier New', monospace;
+                            font-size: 0.875rem;
+                            overflow-x: auto;
+                            line-height: 1.6;
+                        }
+
+                        @media (max-width: 768px) {
+                            body {
+                                padding: 1rem;
+                            }
+
+                            .dashboard-header {
+                                padding: 1.5rem;
+                            }
+
+                            .header-title h1 {
+                                font-size: 1.5rem;
+                            }
+
+                            .build-info {
+                                padding: 1.5rem;
+                            }
+
+                            .content-area {
+                                padding: 1.5rem;
+                            }
+
+                            .tabs-container {
+                                padding: 0 1rem;
+                            }
+                        }
+                    </style>
                 </head>
                 <body>
-                    <header>
-                        <h1>FixMate Build Analysis Dashboard</h1>
-                    </header>
-                    <div class="container">
-                        <div class="card">
-                            <h2>Build Info</h2>
-                            <p><span class="badge info">Job</span> ${env.JOB_NAME}</p>
-                            <p><span class="badge info">Build ID</span> ${env.BUILD_NUMBER}</p>
-                            <p><span class="badge info">Time</span> ${new Date()}</p>
+                    <div class="dashboard-container">
+                        <div class="dashboard-header">
+                            <div class="header-content">
+                                <div class="header-title">
+                                    <h1 id="dashboard-title"><span style="font-size: 2rem; margin-right: 0.5rem;">🤖</span> FixMate Analysis</h1>
+                                    <p id="build-name">Build #${env.BUILD_NUMBER} - ${env.JOB_NAME}</p>
+                                </div>
+                                <div class="status-badge">
+                                    <span class="status-icon"></span> Build Failed
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="card">
-                            <h2>Error Summary</h2>
-                            <p><span class="badge error">Root Cause</span> ${rootCause}</p>
-                            <p><span class="badge warning">Suggested Fix</span> ${suggestedFix}
-                            <button class="copy-btn" onclick="copyFix()">Copy</button></p>
+                        <div class="build-info">
+                            <div class="summary-card">
+                                <h3>Build Summary</h3>
+                                <p>${buildSummary}</p>
+                            </div>
                         </div>
 
-                        <div class="card">
-                            <button class="collapsible"><i class="fa fa-chevron-down"></i> Show Raw JSON Response</button>
-                            <div class="content">
-                                <pre>${response.content}</pre>
+                        <div class="tabs-container">
+                            <button class="tab active" data-tab="root-cause">Root Cause</button>
+                            <button class="tab" data-tab="fix">Fix</button>
+                            <button class="tab" data-tab="raw-logs">Raw Response</button>
+                        </div>
+
+                        <div class="content-area">
+                            <div class="tab-content active" id="content-root-cause">
+                                <div class="content-section">
+                                    <h3>🔍 Root Cause</h3>
+                                    <p>${rootCause}</p>
+                                </div>
+                            </div>
+
+                            <div class="tab-content" id="content-fix">
+                                <h3 style="margin-top: 0; margin-bottom: 1.5rem; color: #2d3748;">🔧 Recommended Fix</h3>
+                                <ul class="fix-steps" id="fix-steps-list">
+                                    <!-- Fix steps will be populated by JavaScript -->
+                                </ul>
+                            </div>
+
+                            <div class="tab-content" id="content-raw-logs">
+                                <div class="content-section">
+                                    <h3>📋 Raw JSON Response</h3>
+                                    <div class="json-viewer">
+                                        <pre>${response.content}</pre>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <footer>Powered by FixMate &copy; 2025</footer>
 
                     <script>
-                        const coll = document.getElementsByClassName("collapsible");
-                        for (let i = 0; i < coll.length; i++) {
-                            coll[i].addEventListener("click", function() {
-                                this.classList.toggle("active");
-                                const content = this.nextElementSibling;
-                                content.style.display = content.style.display === "block" ? "none" : "block";
+                        // Parse suggested fix and create steps
+                        function parseFixSteps(fixText) {
+                            const steps = fixText.split(/\\d+\\./).filter(step => step.trim());
+                            const stepsList = document.getElementById('fix-steps-list');
+                            stepsList.innerHTML = '';
+
+                            steps.forEach((step, index) => {
+                                const li = document.createElement('li');
+                                li.innerHTML = \`
+                                    <div class="step-number">\${index + 1}</div>
+                                    <div class="step-content">\${step.trim()}</div>
+                                \`;
+                                stepsList.appendChild(li);
+                            });
+
+                            // If no numbered steps found, create a single step
+                            if (steps.length === 0 && fixText) {
+                                const li = document.createElement('li');
+                                li.innerHTML = \`
+                                    <div class="step-number">1</div>
+                                    <div class="step-content">\${fixText}</div>
+                                \`;
+                                stepsList.appendChild(li);
+                            }
+                        }
+
+                        // Initialize with the suggested fix from Jenkins
+                        parseFixSteps(\"${suggestedFix}\");
+
+                        // Tab switching functionality
+                        const tabs = document.querySelectorAll('.tab');
+                        const tabContents = document.querySelectorAll('.tab-content');
+
+                        tabs.forEach(tab => {
+                            tab.addEventListener('click', () => {
+                                const targetTab = tab.dataset.tab;
+
+                                tabs.forEach(t => t.classList.remove('active'));
+                                tabContents.forEach(c => c.classList.remove('active'));
+
+                                tab.classList.add('active');
+                                document.getElementById(\`content-\${targetTab}\`).classList.add('active');
+                            });
+                        });
+
+                        // Copy fix to clipboard functionality
+                        function copyFixToClipboard() {
+                            const fixText = \`\${"${suggestedFix}"}\`;
+                            navigator.clipboard.writeText(fixText).then(() => {
+                                alert('Suggested fix copied to clipboard!');
+                            }).catch(err => {
+                                console.error('Failed to copy text: ', err);
                             });
                         }
 
-                        function copyFix() {
-                            const fix = document.querySelector(".badge.warning").innerText.replace('Suggested Fix', '').trim();
-                            navigator.clipboard.writeText(fix).then(() => alert('Suggested fix copied to clipboard!'));
-                        }
+                        // Add copy button to fix tab
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const fixTab = document.querySelector('[data-tab="fix"]');
+                            if (fixTab) {
+                                const copyButton = document.createElement('button');
+                                copyButton.textContent = 'Copy Fix';
+                                copyButton.style.marginLeft = '10px';
+                                copyButton.style.padding = '5px 10px';
+                                copyButton.style.background = '#6d9dc5';
+                                copyButton.style.color = 'white';
+                                copyButton.style.border = 'none';
+                                copyButton.style.borderRadius = '4px';
+                                copyButton.style.cursor = 'pointer';
+                                copyButton.addEventListener('click', function(e) {
+                                    e.stopPropagation();
+                                    copyFixToClipboard();
+                                });
+                                fixTab.appendChild(copyButton);
+                            }
+                        });
                     </script>
                 </body>
                 </html>
@@ -179,6 +510,8 @@ pipeline {
                     reportFiles: 'dashboard.html',
                     reportName: 'FixMate Build Analysis Dashboard'
                 ])
+
+                echo "📊 FixMate analysis dashboard generated successfully!"
             }
         }
 
