@@ -337,9 +337,9 @@ pipeline {
                        }
 
                        /* Hide any back to page or dashboard buttons */
-                       .back-button, .dashboard-button, .breadcrumb, .jenkins-breadcrumbs {
-                           display: none !important;
-                       }
+//                        .back-button, .dashboard-button, .breadcrumb, .jenkins-breadcrumbs {
+//                            display: none !important;
+//                        }
 
                        @media (max-width: 768px) {
                            body {
