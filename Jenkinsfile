@@ -98,6 +98,39 @@ pipeline {
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
                     <title>FixMate Build Analysis Dashboard</title>
                     <style>
+
+                    /* Hide Jenkins breadcrumb navigation */
+                    #breadcrumbBar, .jenkins-breadcrumbs, .breadcrumb, .breadcrumbs,
+                    .breadcrumbBar, .breadcrumb-item, .jenkins-breadcrumb-list,
+                    [class*="breadcrumb"], [id*="breadcrumb"] {
+                        display: none !important;
+                        visibility: hidden !important;
+                    }
+
+                    /* Hide any back to top or navigation links */
+                    .back-to-top, .back-link, [href*="back"], [title*="Back"],
+                    [class*="back"], [id*="back"] {
+                        display: none !important;
+                        visibility: hidden !important;
+                    }
+
+                    /* Hide specific Jenkins elements */
+                    #breadcrumbs, .breadcrumbBar, .jenkins-breadcrumbs {
+                        display: none !important;
+                    }
+
+                    /* Ensure the body starts from top */
+                    body {
+                        padding-top: 0 !important;
+                        margin-top: 0 !important;
+                    }
+
+                    /* Hide any dashboard navigation */
+                    [href*="dashboard"], [title*="dashboard"],
+                    [class*="dashboard"], [id*="dashboard"] {
+                        display: none !important;
+                    }
+
                        html, body {
                            height: 100%;
                            margin: 0;
@@ -337,9 +370,9 @@ pipeline {
                        }
 
                        /* Hide any back to page or dashboard buttons */
-//                        .back-button, .dashboard-button, .breadcrumb, .jenkins-breadcrumbs {
-//                            display: none !important;
-//                        }
+                       .back-button, .dashboard-button, .breadcrumb, .jenkins-breadcrumbs {
+                           display: none !important;
+                       }
 
                        @media (max-width: 768px) {
                            body {
