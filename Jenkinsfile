@@ -96,7 +96,7 @@ pipeline {
                 <head>
                     <meta charset="UTF-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>FixMate Build Analysis Dashboard</title>
+                    <title>FixMate Analysis</title>
                     <style>
                        html, body {
                            height: 100%;
@@ -520,7 +520,7 @@ pipeline {
                     keepAll: true,
                     reportDir: 'target/fix-mate-reports',
                     reportFiles: 'dashboard.html',
-                    reportName: 'FixMate Build Analysis Dashboard'
+                    reportName: 'FixMate Analysis'
                 ])
 
                 echo "📊 FixMate analysis dashboard generated successfully!"
