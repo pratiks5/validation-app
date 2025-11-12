@@ -405,12 +405,19 @@ pipeline {
                         <div class="dashboard-header">
                             <div class="header-content">
                                 <div class="header-title">
-                                    <h1 id="dashboard-title"><span style="font-size: 2rem; margin-right: 0.5rem;">🤖</span> FixMate Analysis</h1>
-                                    <p id="build-name">Build #${env.BUILD_NUMBER} - ${env.JOB_NAME}</p>
+                                    <div class="robot-icon">🤖</div>
+                                    <div class="title-content">
+                                        <h1>FixMate Analysis</h1>
+                                        <p>Build failure analysis and resolution</p>
+                                    </div>
                                 </div>
-                                <div class="status-badge">
-                                    <span class="status-icon"></span> Build Failed
+                                <div class="build-info-right">
+                                    <div class="build-id">Build #${env.BUILD_NUMBER}</div>
+                                    <div class="branch-name">${env.JOB_NAME}</div>
                                 </div>
+                            </div>
+                            <div class="status-badge">
+                                <span class="status-icon"></span> Build Failed
                             </div>
                         </div>
 
