@@ -184,7 +184,8 @@ pipeline {
                        }
 
                        .branch-name {
-                           font-size: 1.1rem;
+                           font-size: 1.2rem;
+                           font-weight: 600;
                            opacity: 0.8;
                            margin: 0;
                        }
