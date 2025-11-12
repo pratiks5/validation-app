@@ -189,30 +189,7 @@ pipeline {
                            margin: 0;
                        }
 
-                       .status-badge {
-                           display: inline-flex;
-                           align-items: center;
-                           gap: 0.5rem;
-                           background: #fc8181;
-                           padding: 0.75rem 1.5rem;
-                           border-radius: 9999px;
-                           font-weight: 600;
-                           font-size: 1rem;
-                           margin-top: 1rem;
-                       }
-
-                       .status-icon {
-                           width: 10px;
-                           height: 10px;
-                           background: white;
-                           border-radius: 50%;
-                           animation: pulse 2s infinite;
-                       }
-
-                       @keyframes pulse {
-                           0%, 100% { opacity: 1; }
-                           50% { opacity: 0.5; }
-                       }
+                       /* Removed status-badge and status-icon styles completely */
 
                        .build-info {
                            display: grid;
@@ -359,6 +336,11 @@ pipeline {
                            line-height: 1.6;
                        }
 
+                       /* Hide any back to page or dashboard buttons */
+                       .back-button, .dashboard-button, .breadcrumb, .jenkins-breadcrumbs {
+                           display: none !important;
+                       }
+
                        @media (max-width: 768px) {
                            body {
                                padding: 1rem;
@@ -416,9 +398,7 @@ pipeline {
                                     <div class="branch-name">${env.JOB_NAME}</div>
                                 </div>
                             </div>
-                            <div class="status-badge">
-                                <span class="status-icon"></span> Build Failed
-                            </div>
+                            <!-- Build Failed button removed from here -->
                         </div>
 
                         <div class="build-info">
