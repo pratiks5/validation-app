@@ -9,7 +9,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = "prats5/validation-app"
         DOCKER_TAG = "latest"
-        FIXMATE_SERVICE_URL = "http://localhost:9090/api/logs/analyze"
+        FIXMATE_SERVICE_URL = "http://host.docker.internal:9090/api/logs/analyze"
     }
 
     stages {
