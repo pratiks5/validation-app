@@ -466,14 +466,7 @@ pipeline {
                         });
 
                         // Copy fix to clipboard functionality
-                        function copyFixToClipboard() {
-                            const fixText = "${suggestedFix}";
-                            navigator.clipboard.writeText(fixText).then(() => {
-                                alert('Suggested fix copied to clipboard!');
-                            }).catch(err => {
-                                console.error('Failed to copy text: ', err);
-                            });
-                        }
+
 
                         // Add copy button to fix tab
                         document.addEventListener('DOMContentLoaded', function() {
@@ -488,11 +481,6 @@ pipeline {
                                 copyButton.style.border = 'none';
                                 copyButton.style.borderRadius = '4px';
                                 copyButton.style.cursor = 'pointer';
-                                copyButton.addEventListener('click', function(e) {
-                                    e.stopPropagation();
-                                    copyFixToClipboard();
-                                });
-                                fixTab.appendChild(copyButton);
                             }
                         });
                     </script>
