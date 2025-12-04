@@ -419,9 +419,7 @@ pipeline {
                             <div class="tab-content active" id="content-root-cause">
                                 <div class="content-section">
                                     <h3>🔍 Root Cause</h3>
-                                    <p>
-                                        ${rootCause}
-                                    </p>
+                                    <p>${rootCause}</p>
                                 </div>
                             </div>
 
@@ -436,7 +434,7 @@ pipeline {
                                 <div class="content-section">
                                     <h3>📋 Raw JSON Response</h3>
                                     <div class="json-viewer">
-                                        <pre id="raw-json"></pre>
+                                        <pre>${response.content}</pre>
                                     </div>
                                 </div>
                             </div>
@@ -444,101 +442,70 @@ pipeline {
                     </div>
 
                     <script>
-                        // Avoid JS errors by wrapping in a try/catch
-                        try {
-                            // Suggested fix and raw JSON injected safely as JS strings
-                            const suggestedFixText = ${groovy.json.JsonOutput.toJson(suggestedFix)};
-                            const rawResponseText = ${groovy.json.JsonOutput.toJson(response.content)};
+                        // Parse suggested fix and create steps
+                        function parseFixSteps(fixText) {
+                            // Escape HTML to prevent XSS
+                            const escapeHtml = (text) => {
+                                const div = document.createElement('div');
+                                div.textContent = text;
+                                return div.innerHTML;
+                            };
 
-                            // Parse suggested fix and create steps
-                            function parseFixSteps(fixText) {
-                                // Escape HTML to prevent XSS
-                                const escapeHtml = (text) => {
-                                    const div = document.createElement('div');
-                                    div.textContent = text;
-                                    return div.innerHTML;
-                                };
+                            const steps = fixText.split(/\\d+\\./).filter(step => step.trim());
+                            const stepsList = document.getElementById('fix-steps-list');
+                            stepsList.innerHTML = '';
 
-                                const steps = fixText.split(/\n+|\r+|\d+\./).filter(step => step.trim());
-                                const stepsList = document.getElementById('fix-steps-list');
-                                if (!stepsList) return;
-                                stepsList.innerHTML = '';
-
-                                if (steps.length > 0) {
-                                    steps.forEach((step, index) => {
-                                        const li = document.createElement('li');
-                                        li.innerHTML = '<div class="step-number">' + (index + 1) + '</div><div class="step-content">' + escapeHtml(step.trim()) + '</div>';
-                                        stepsList.appendChild(li);
-                                    });
-                                } else {
-                                    // If no numbered steps found, create a single step
+                            if (steps.length > 0) {
+                                steps.forEach((step, index) => {
                                     const li = document.createElement('li');
-                                    li.innerHTML = '<div class="step-number">1</div><div class="step-content">' + escapeHtml(fixText) + '</div>';
+                                    li.innerHTML = '<div class="step-number">' + (index + 1) + '</div><div class="step-content">' + escapeHtml(step.trim()) + '</div>';
                                     stepsList.appendChild(li);
-                                }
-                            }
-
-                            // Initialize with the suggested fix from Jenkins
-                            parseFixSteps(suggestedFixText);
-
-                            // Inject raw JSON safely
-                            const rawJsonPre = document.getElementById('raw-json');
-                            if (rawJsonPre) {
-                                rawJsonPre.textContent = rawResponseText;
-                            }
-
-                            // Tab switching functionality
-                            const tabs = document.querySelectorAll('.tab');
-                            const tabContents = document.querySelectorAll('.tab-content');
-
-                            tabs.forEach(tab => {
-                                tab.addEventListener('click', () => {
-                                    const targetTab = tab.dataset.tab;
-                                    if (!targetTab) return;
-
-                                    tabs.forEach(t => t.classList.remove('active'));
-                                    tabContents.forEach(c => c.classList.remove('active'));
-
-                                    tab.classList.add('active');
-                                    const targetContent = document.getElementById('content-' + targetTab);
-                                    if (targetContent) {
-                                        targetContent.classList.add('active');
-                                    }
                                 });
-                            });
-
-                            // Add copy button to fix tab and wire clipboard
-                            document.addEventListener('DOMContentLoaded', function() {
-                                const fixTabButton = document.querySelector('[data-tab="fix"]');
-                                const tabsContainer = document.querySelector('.tabs-container');
-                                if (fixTabButton && tabsContainer) {
-                                    const copyButton = document.createElement('button');
-                                    copyButton.textContent = 'Copy Fix';
-                                    copyButton.style.marginLeft = '10px';
-                                    copyButton.style.padding = '5px 10px';
-                                    copyButton.style.background = '#6d9dc5';
-                                    copyButton.style.color = 'white';
-                                    copyButton.style.border = 'none';
-                                    copyButton.style.borderRadius = '4px';
-                                    copyButton.style.cursor = 'pointer';
-
-                                    // Append next to tabs container
-                                    tabsContainer.appendChild(copyButton);
-
-                                    copyButton.addEventListener('click', async () => {
-                                        try {
-                                            await navigator.clipboard.writeText(suggestedFixText);
-                                            copyButton.textContent = 'Copied!';
-                                            setTimeout(() => copyButton.textContent = 'Copy Fix', 1500);
-                                        } catch (e) {
-                                            console.error('Clipboard write failed:', e);
-                                        }
-                                    });
-                                }
-                            });
-                        } catch (e) {
-                            console.error('FixMate dashboard init error:', e);
+                            } else {
+                                // If no numbered steps found, create a single step
+                                const li = document.createElement('li');
+                                li.innerHTML = '<div class="step-number">1</div><div class="step-content">' + escapeHtml(fixText) + '</div>';
+                                stepsList.appendChild(li);
+                            }
                         }
+
+                        // Initialize with the suggested fix from Jenkins
+                        parseFixSteps("${suggestedFix.replaceAll('"', '\\\\"').replaceAll('\\n', '\\\\n')}");
+
+                        // Tab switching functionality
+                        const tabs = document.querySelectorAll('.tab');
+                        const tabContents = document.querySelectorAll('.tab-content');
+
+                        tabs.forEach(function(tab) {
+                            tab.addEventListener('click', function() {
+                                const targetTab = tab.dataset.tab;
+
+                                tabs.forEach(function(t) { t.classList.remove('active'); });
+                                tabContents.forEach(function(c) { c.classList.remove('active'); });
+
+                                tab.classList.add('active');
+                                document.getElementById('content-' + targetTab).classList.add('active');
+                            });
+                        });
+
+                        // Copy fix to clipboard functionality
+
+
+                        // Add copy button to fix tab
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const fixTab = document.querySelector('[data-tab="fix"]');
+                            if (fixTab) {
+                                const copyButton = document.createElement('button');
+                                copyButton.textContent = 'Copy Fix';
+                                copyButton.style.marginLeft = '10px';
+                                copyButton.style.padding = '5px 10px';
+                                copyButton.style.background = '#6d9dc5';
+                                copyButton.style.color = 'white';
+                                copyButton.style.border = 'none';
+                                copyButton.style.borderRadius = '4px';
+                                copyButton.style.cursor = 'pointer';
+                            }
+                        });
                     </script>
                 </body>
                 </html>
