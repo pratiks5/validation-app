@@ -17,6 +17,6 @@ public class PersonController {
 
     @GetMapping("/api/persons")
     public List<Person> getPersons() {
-        return personService.getAllPersons();\
+        return personService.getAllPersons();
     }
 }

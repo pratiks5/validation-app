@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -16,10 +18,17 @@ public class PersonService {
     public List<Person> getAllPersons() {
         ObjectMapper mapper = new ObjectMapper();
         try {
-            InputStream inputStream = new ClassPathResource("output.json").getInputStream();
+            File file = new File("output.json");
+            InputStream inputStream;
+            if (file.exists()) {
+                inputStream = new FileInputStream(file);
+            } else {
+                inputStream = new ClassPathResource("output.json").getInputStream();
+            }
+
             return mapper.readValue(inputStream, new TypeReference<List<Person>>() {});
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read persons.json", e);
+            throw new RuntimeException("Failed to read output.json", e);
         }
     }
 }
